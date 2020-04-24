@@ -21,11 +21,8 @@ namespace RealTimeTest
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            // Register default ServerSentEventsService.
-            services.AddServerSentEvents();
-
-            services.AddServerSentEvents<ISseEmitterService, SseEmitterService>();
-
+            services.AddServerSentEvents<IServerSentEventsService, SseEmitterService>();
+            services.AddServerSentEvents<IServerSentEventsService, SseNotifierService>();
 
             services.AddResponseCompression(options =>
             {
@@ -46,7 +43,8 @@ namespace RealTimeTest
                 .UseRouting()
                 .UseEndpoints(endpoints =>
                 {
-                    endpoints.MapServerSentEvents("/see-emitter");
+                    endpoints.MapServerSentEvents<SseEmitterService>("/see-emitter");
+                    endpoints.MapServerSentEvents<SseNotifierService>("/see-notifier");
                     endpoints.MapPost("/update-receiver", async context =>
                     {
                         var request = context.Request;

@@ -14,28 +14,24 @@
         <textarea id="sseTextField" placeholder="Type here." style="resize: vertical"></textarea>
         <button onclick="post()">Send new value</button>
         <script>
+            var currentVersion = 0;
             var sseStringVersion = document.getElementById('sseStringVersion');
             var sseData = document.getElementById('sseData');
             var sseTextField = document.getElementById('sseTextField');
 
-            var source = new EventSource("/see-emitter");
-
-            source.onerror = function (event) {
-                console.log("error");
-            } 
-
-            source.onopen = function (event) {
-                console.log("open");
-            } 
+            var source = new EventSource("/see-notifier");
 
             source.onmessage = function (event) {
-                setFields(event.data);
+                if (currentVersion != event.data) {
+                    fetchData();
+                }
             } 
 
             function setFields(data) {
                 var message = JSON.parse(data);
 
-                sseStringVersion.value = "Version: " + message.version;
+                currentVersion = message.version;
+                sseStringVersion.value = "Version: " + currentVersion;
                 sseData.value = "Data: \n" + message.data;
             }
 
@@ -51,8 +47,12 @@
                 sseTextField.value = "";
             }
 
-             fetch("/data").then(res => res.text()).then(text => setFields(text));
-            
+            function fetchData() {
+                fetch("/data").then(res => res.text()).then(text => setFields(text));
+            }
+
+            fetchData();
+
         </script>
     </div>
 </body>
