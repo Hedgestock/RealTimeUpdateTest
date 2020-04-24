@@ -32,9 +32,12 @@ namespace RealTimeTest
 
             public int version { get { return _version; } }
 
-
             public event EventHandler DataChanged;
 
+            public override string ToString()
+            {
+                return JsonConvert.SerializeObject(this);
+            }
         }
         public static DataHolder data = new DataHolder();
 

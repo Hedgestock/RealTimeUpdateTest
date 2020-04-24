@@ -21,19 +21,15 @@
             var source = new EventSource("/see-emitter");
 
             source.onmessage = function (event) {
-                console.log('SSE EVENT: { id: "' +
-                    event.id +
-                    '", type: "' +
-                    event.type +
-                    '", data: "' +
-                    event.data +
-                    '" }');
+                setFields(event.data);
+            } 
 
-                var message = JSON.parse(event.data);
+            function setFields(data) {
+                var message = JSON.parse(data);
 
                 sseStringVersion.value = "Version: " + message.version;
                 sseData.value = "Data: \n" + message.data;
-            } 
+            }
 
             function post() {
                 fetch("/update-receiver",
@@ -47,14 +43,7 @@
                 sseTextField.value = "";
             }
 
-            fetch("/update-receiver",
-                {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ data: sseTextField.value })
-                });
+             fetch("/data").then(res => res.text()).then(text => setFields(text));
             
         </script>
     </div>

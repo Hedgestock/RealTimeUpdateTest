@@ -24,8 +24,8 @@ namespace RealTimeTest
             // Register default ServerSentEventsService.
             services.AddServerSentEvents();
 
+            services.AddServerSentEvents<ISseEmitterService, SseEmitterService>();
 
-            services.AddSingleton<IHostedService, EmitterService>();
 
             services.AddResponseCompression(options =>
             {
@@ -56,6 +56,8 @@ namespace RealTimeTest
                         context.Response.StatusCode = 200 ;
                         await context.Response.CompleteAsync();
                     });
+                    endpoints.MapGet("/data",
+                        async context => { await context.Response.WriteAsync(Program.data.ToString()); });
                 });
 
         }
