@@ -50,6 +50,23 @@ namespace RealTimeTest
                 {
                     endpoints.MapServerSentEvents<SseEmitterService>("/see-emitter");
                     endpoints.MapServerSentEvents<SseNotifierService>("/see-notifier");
+                    endpoints.MapGet("/my-see-emitter",
+                        async context =>
+                        {
+                            var response = context.Response;
+                            response.Headers.Add("Content-Type", "text/event-stream");
+                            async void onChangeHandler(object sender, EventArgs e)
+                            {
+                                await response
+                                    .WriteAsync($"data: {Program.data.ToString()}\r\r");
+                                await response.Body.FlushAsync();
+                            };
+                            Program.data.DataChanged += onChangeHandler;
+                            context.RequestAborted.WaitHandle.WaitOne();
+
+                            Program.data.DataChanged -= onChangeHandler;
+                        }
+                        );
                     endpoints.MapPost("/update-receiver", async context =>
                     {
                         var request = context.Request;
@@ -69,7 +86,7 @@ namespace RealTimeTest
                         if (context.WebSockets.IsWebSocketRequest)
                         {
                             WebSocket webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                            await Echo(webSocket);
+                            await SendData(webSocket);
                             return;
                         }
 
@@ -83,7 +100,7 @@ namespace RealTimeTest
 
         }
 
-        private async Task Echo(WebSocket webSocket)
+        private async Task SendData(WebSocket webSocket)
         {
             byte[] buffer = new byte[1024 * 4];
             async void onChangeHandler(object sender, EventArgs e)

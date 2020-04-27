@@ -1,0 +1,59 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Welcome to the world of sse !</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+    <div style="display: flex; flex-direction: column">
+
+        <h2>Server sent events</h2>
+        <input id="sseStringVersion" disabled placeholder="Version number should be here."/>
+        <textarea id="sseData" disabled placeholder="Data should be here." style="resize: vertical"></textarea>
+        <textarea id="sseTextField" placeholder="Type here." style="resize: vertical"></textarea>
+        <button onclick="post()">Send new value</button>
+        <script>
+            var sseStringVersion = document.getElementById('sseStringVersion');
+            var sseData = document.getElementById('sseData');
+            var sseTextField = document.getElementById('sseTextField');
+
+            var source = new EventSource("/my-see-emitter");
+
+            source.onerror = function () {
+                console.log("error");
+            } 
+
+            source.onopen = function () {
+                console.log("open");
+            } 
+
+            source.onmessage = function (event) {
+                setFields(event.data);
+            } 
+
+            function setFields(data) {
+                var message = JSON.parse(data);
+
+                sseStringVersion.value = "Version: " + message.version;
+                sseData.value = "Data: \n" + message.data;
+            }
+
+            function post() {
+                fetch("/update-receiver",
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ data: sseTextField.value })
+                    });
+                sseTextField.value = "";
+            }
+
+             fetch("/data").then(res => res.text()).then(text => setFields(text));
+            
+        </script>
+    </div>
+</body>
+</html>
