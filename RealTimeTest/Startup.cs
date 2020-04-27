@@ -61,7 +61,8 @@ namespace RealTimeTest
                     });
                     endpoints.MapGet("/data",
                         async context => { await context.Response.WriteAsync(Program.data.ToString()); });
-                }).Use(async (context, next) =>
+                })
+                .Use(async (context, next) =>
                 {
                     if (context.Request.Path == "/ws-emitter-receiver")
                     {
@@ -85,11 +86,12 @@ namespace RealTimeTest
         private async Task Echo(WebSocket webSocket)
         {
             byte[] buffer = new byte[1024 * 4];
-            Program.data.DataChanged += async (object sender, EventArgs e) =>
+            async void onChangeHandler(object sender, EventArgs e)
             {
                 var str = Program.data.ToString();
                 await webSocket.SendAsync(new ArraySegment<byte>(Encoding.Default.GetBytes(str), 0, str.Length), WebSocketMessageType.Text, true, CancellationToken.None);
             };
+            Program.data.DataChanged += onChangeHandler;
             var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
             while (!result.CloseStatus.HasValue)
             {
@@ -97,6 +99,7 @@ namespace RealTimeTest
                 result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
             }
 
+            Program.data.DataChanged -= onChangeHandler;
             await webSocket.CloseAsync(result.CloseStatus.Value, result.CloseStatusDescription, CancellationToken.None);
         }
 
