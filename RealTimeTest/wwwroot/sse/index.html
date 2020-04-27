@@ -20,11 +20,11 @@
 
             var source = new EventSource("/see-emitter");
 
-            source.onerror = function (event) {
+            source.onerror = function () {
                 console.log("error");
             } 
 
-            source.onopen = function (event) {
+            source.onopen = function () {
                 console.log("open");
             } 
 

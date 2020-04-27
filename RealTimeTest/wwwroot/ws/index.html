@@ -6,12 +6,59 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
 </head>
 <body>
-    <div style="display: flex; flex-direction: column">
+<div style="display: flex; flex-direction: column">
 
-        <h2>Web sockets</h2>
-        <input id="wsStringVersion" disabled placeholder="Not yet implemented"/>
-        <input id="wsData" disabled placeholder="Not yet implemented"/>
-        <textarea id="wsTextField" placeholder="Type here."></textarea>
-    </div>
+    <h2>Web sockets</h2>
+    <input id="wsStringVersion" disabled placeholder="Version number should be here." />
+    <textarea id="wsData" disabled placeholder="Data should be here."></textarea>
+    <textarea id="wsTextField" placeholder="Type here."></textarea>
+    <button onclick="sendData()">Send new value</button>
+
+</div>
+
+<script>
+    var wsStringVersion = document.getElementById('wsStringVersion');
+    var wsData = document.getElementById('wsData');
+    var wsTextField = document.getElementById('wsTextField');
+    var webSocketProtocol = location.protocol == "https:" ? "wss:" : "ws:";
+    var webSocketURI = webSocketProtocol + "//" + location.host + "/ws-emitter-receiver";
+
+    socket = new WebSocket(webSocketURI);
+
+    socket.onopen = function () {
+        console.log("Connected.");
+    };
+
+    socket.onclose = function (event) {
+        if (event.wasClean) {
+            console.log('Disconnected.');
+        } else {
+            console.log('Connection lost.');
+        }
+        console.log('Code: ' + event.code + '. Reason: ' + event.reason);
+    };
+
+    socket.onerror = function (error) {
+        console.log("Error: " + error.message);
+    };
+
+    socket.onmessage = function (event) {
+        setFields(event.data);
+    };
+
+    function setFields(data) {
+        var message = JSON.parse(data);
+
+        wsStringVersion.value = "Version: " + message.version;
+        wsData.value = "Data: \n" + message.data;
+    }
+
+    function sendData() {
+        socket.send(wsTextField.value);
+        wsTextField.value = "";
+    }
+
+    fetch("/data").then(res => res.text()).then(text => setFields(text));
+</script>
 </body>
 </html>

@@ -13,6 +13,7 @@
         <textarea id="sseData" disabled placeholder="Data should be here." style="resize: vertical"></textarea>
         <textarea id="sseTextField" placeholder="Type here." style="resize: vertical"></textarea>
         <button onclick="post()">Send new value</button>
+
         <script>
             var currentVersion = 0;
             var sseStringVersion = document.getElementById('sseStringVersion');
@@ -20,6 +21,14 @@
             var sseTextField = document.getElementById('sseTextField');
 
             var source = new EventSource("/see-notifier");
+
+            source.onerror = function () {
+                console.log("error");
+            } 
+
+            source.onopen = function () {
+                console.log("open");
+            } 
 
             source.onmessage = function (event) {
                 if (currentVersion != event.data) {
