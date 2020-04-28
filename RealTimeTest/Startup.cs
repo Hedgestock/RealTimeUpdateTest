@@ -57,11 +57,15 @@ namespace RealTimeTest
                             response.Headers.Add("Content-Type", "text/event-stream");
                             async void onChangeHandler(object sender, EventArgs e)
                             {
+                                string id = Program.lastEventID != -1 ? Program.lastEventID.ToString() : "";
                                 await response
-                                    .WriteAsync($"data: {Program.data.ToString()}\r\r");
+                                    .WriteAsync($"id: {id}\ndata: {Program.data}\r\r");
                                 await response.Body.FlushAsync();
+                                Program.lastEventID++;
                             };
+
                             Program.data.DataChanged += onChangeHandler;
+
                             context.RequestAborted.WaitHandle.WaitOne();
 
                             Program.data.DataChanged -= onChangeHandler;

@@ -39,6 +39,9 @@ namespace RealTimeTest
                 return JsonConvert.SerializeObject(this);
             }
         }
+
+        public static int lastEventID = -1;
+
         public static DataHolder data = new DataHolder();
 
         public static void Main(string[] args)
