@@ -59,13 +59,16 @@ namespace RealTimeTest
                             {
                                 string id = Program.lastEventID != -1 ? Program.lastEventID.ToString() : "";
                                 await response
-                                    .WriteAsync($"id: {id}\ndata: {Program.data}\r\r");
+                                    .WriteAsync($"id: {id}\ndata: {Program.data}\n\n");
                                 await response.Body.FlushAsync();
                                 Program.lastEventID++;
                             };
 
                             Program.data.DataChanged += onChangeHandler;
 
+                            await response.WriteAsync(":ok\n\n");
+                            await response.Body.FlushAsync();
+                            
                             context.RequestAborted.WaitHandle.WaitOne();
 
                             Program.data.DataChanged -= onChangeHandler;

@@ -9,7 +9,7 @@
 <body>
     <div style="display: flex; flex-direction: column">
 
-        <h2>Server sent events</h2>
+        <h2>Server sent events with node proxy</h2>
         <input id="sseStringVersion" disabled placeholder="Version number should be here."/>
         <textarea id="sseData" disabled placeholder="Data should be here." style="resize: vertical"></textarea>
         <textarea id="sseTextField" placeholder="Type here." style="resize: vertical"></textarea>
@@ -19,7 +19,7 @@
             var sseData = document.getElementById('sseData');
             var sseTextField = document.getElementById('sseTextField');
 
-            var source = new EventSource("/see");
+            var source = new EventSource("/sse");
 
             source.onerror = function () {
                 console.log("error");
@@ -41,7 +41,7 @@
             }
 
             function post() {
-                fetch("/update-receiver",
+                fetch("/update",
                     {
                         method: 'POST',
                         headers: {
