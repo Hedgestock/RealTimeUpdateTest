@@ -1,0 +1,311 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Welcome to my small talk.</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body style="display: flex; flex-direction: row; flex-wrap: wrap; justify-content: space-evenly">
+
+    <div style="display: flex; flex-direction: column">
+        <h2>Server sent events</h2>
+        <input id="sseStringVersion" disabled placeholder="Version number should be here."/>
+        <textarea id="sseData" disabled placeholder="Data should be here." style="resize: vertical"></textarea>
+        <textarea id="sseTextField" placeholder="Type here." style="resize: vertical"></textarea>
+        <button onclick="ssePost()">Send new value</button>
+    </div>
+
+    <script>
+        /*** SERVER SENT EVENTS ***/
+
+        var sseStringVersion = document.getElementById('sseStringVersion');
+        var sseData = document.getElementById('sseData');
+        var sseTextField = document.getElementById('sseTextField');
+
+        var source = new EventSource("/see-emitter");
+
+        source.onerror = function () {
+            console.log("sse error");
+        } 
+
+        source.onopen = function () {
+            console.log("sse open");
+        } 
+
+        source.onmessage = function (event) {
+            sseSetFields(event.data);
+        } 
+
+        function sseSetFields(data) {
+            var message = JSON.parse(data);
+
+            sseStringVersion.value = "Version: " + message.version;
+            sseData.value = "Data: \n" + message.data;
+        }
+
+        function ssePost() {
+            fetch("/update-receiver",
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ data: sseTextField.value })
+                });
+            sseTextField.value = "";
+        }
+
+         fetch("/data").then(res => res.text()).then(text => sseSetFields(text));
+        
+    </script>
+
+    <div style="display: flex; flex-direction: column">
+        <h2>Web sockets</h2>
+        <input id="wsStringVersion" disabled placeholder="Version number should be here." />
+        <textarea id="wsData" disabled placeholder="Data should be here."></textarea>
+        <textarea id="wsTextField" placeholder="Type here."></textarea>
+        <button onclick="sendData()">Send new value</button>
+    </div>
+
+    <script>
+        /*** WEB SOCKETS ***/
+
+        const wsStringVersion = document.getElementById('wsStringVersion');
+        const wsData = document.getElementById('wsData');
+        const wsTextField = document.getElementById('wsTextField');
+        const webSocketProtocol = location.protocol == "https:" ? "wss:" : "ws:";
+        const webSocketURI = webSocketProtocol + "//" + location.host + "/ws-emitter-receiver";
+    
+        socket = new WebSocket(webSocketURI);
+    
+        socket.onopen = function () {
+            console.log("ws open");
+        };
+    
+        socket.onclose = function (event) {
+            if (event.wasClean) {
+                console.log('Disconnected.');
+            } else {
+                console.log('Connection lost.');
+            }
+            console.log('Code: ' + event.code + '. Reason: ' + event.reason);
+        };
+    
+        socket.onerror = function (error) {
+            console.log("ws Error: " + error.message);
+        };
+    
+        socket.onmessage = function (event) {
+            wsSetFields(event.data);
+        };
+    
+        function wsSetFields(data) {
+            var message = JSON.parse(data);
+    
+            wsStringVersion.value = "Version: " + message.version;
+            wsData.value = "Data: \n" + message.data;
+        }
+    
+        function sendData() {
+            socket.send(wsTextField.value);
+            wsTextField.value = "";
+        }
+    
+        fetch("/data").then(res => res.text()).then(text => wsSetFields(text));
+    </script>
+
+    <div style="display: flex; flex-direction: column">
+        <h2>Server sent events notifier</h2>
+        <input id="sseNotifierStringVersion" disabled placeholder="Version number should be here."/>
+        <textarea id="sseNotifierData" disabled placeholder="Data should be here." style="resize: vertical"></textarea>
+        <textarea id="sseNotifierTextField" placeholder="Type here." style="resize: vertical"></textarea>
+        <button onclick="sseNotifierPost()">Send new value</button>
+    </div>
+
+    <script>
+        /*** SSE WITH NOTIFIER ***/
+
+        let currentVersion = 0;
+        const sseNotifierStringVersion = document.getElementById('sseNotifierStringVersion');
+        const sseNotifierData = document.getElementById('sseNotifierData');
+        const sseNotifierTextField = document.getElementById('sseNotifierTextField');
+
+        const sseNotifierSource = new EventSource("/see-notifier");
+
+        sseNotifierSource.onerror = function () {
+            console.log("sseNotifier error");
+        } 
+
+        sseNotifierSource.onopen = function () {
+            console.log("sseNotifier open");
+        } 
+
+        sseNotifierSource.onmessage = function (event) {
+            if (currentVersion != event.data) {
+                sseNotifierFetchData();
+            }
+        } 
+
+        function sseNotifierSetFields(data) {
+            const message = JSON.parse(data);
+
+            currentVersion = message.version;
+            sseNotifierStringVersion.value = "Version: " + currentVersion;
+            sseNotifierData.value = "Data: \n" + message.data;
+        }
+
+        function sseNotifierPost() {
+            fetch("/update-receiver",
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ data: sseNotifierTextField.value })
+                });
+            sseNotifierTextField.value = "";
+        }
+
+        function sseNotifierFetchData() {
+            fetch("/data").then(res => res.text()).then(text => sseNotifierSetFields(text));
+        }
+
+        sseNotifierFetchData();
+
+    </script>
+
+    <div style="display: flex; flex-direction: column">
+        <h2>Server sent events without lib</h2>
+        <input id="mySseStringVersion" disabled placeholder="Version number should be here."/>
+        <textarea id="mySseData" disabled placeholder="Data should be here." style="resize: vertical"></textarea>
+        <textarea id="mySseTextField" placeholder="Type here." style="resize: vertical"></textarea>
+        <button onclick="mySsePost()">Send new value</button>
+    </div>
+
+    <script>
+        var mySseStringVersion = document.getElementById('mySseStringVersion');
+        var mySseData = document.getElementById('mySseData');
+        var mySseTextField = document.getElementById('mySseTextField');
+
+        var mySseSource = new EventSource("/my-see-emitter");
+
+        mySseSource.onerror = function () {
+            console.log("error");
+        } 
+
+        mySseSource.onopen = function () {
+            console.log("open");
+        } 
+
+        mySseSource.onmessage = function (event) {
+            setFields(event.data);
+        } 
+
+        function setFields(data) {
+            var message = JSON.parse(data);
+
+            mySseStringVersion.value = "Version: " + message.version;
+            mySseData.value = "Data: \n" + message.data;
+        }
+
+        function mySsePost() {
+            fetch("/update-receiver",
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ data: mySseTextField.value })
+                });
+            mySseTextField.value = "";
+        }
+
+            fetch("/data").then(res => res.text()).then(text => setFields(text));
+        
+    </script>
+
+    <div style="display: flex; flex-direction: column">
+        <h2>Server sent events with node proxy</h2>
+        <input id="sseProxyStringVersion" disabled placeholder="Version number should be here."/>
+        <textarea id="sseProxyData" disabled placeholder="Data should be here." style="resize: vertical"></textarea>
+        <textarea id="sseProxyTextField" placeholder="Type here." style="resize: vertical"></textarea>
+        <button onclick="sseProxyPost()">Send new value</button>
+    </div>
+   
+    <script>
+        /*** SSE WITH NODE PROXY ***/
+
+        const sseProxyAddress = "http://localhost:3103";
+
+        const sseProxyStringVersion = document.getElementById('sseProxyStringVersion');
+        const sseProxyData = document.getElementById('sseProxyData');
+        const sseProxyTextField = document.getElementById('sseProxyTextField');
+
+        const sseProxySource = new EventSource(`${sseProxyAddress}/sse`);
+
+        sseProxySource.onerror = function () {
+            console.log("sseProxy error");
+        } 
+
+        sseProxySource.onopen = function () {
+            console.log("sseProxy open");
+        } 
+
+        sseProxySource.onmessage = function (event) {
+            sseProxySetFields(event.data);
+        } 
+
+        function sseProxySetFields(data) {
+            const message = JSON.parse(data);
+
+            sseProxyStringVersion.value = "Version: " + message.version;
+            sseProxyData.value = "Data: \n" + message.data;
+        }
+
+        function sseProxyPost() {
+            fetch(`${sseProxyAddress}/update`,
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ data: sseProxyTextField.value })
+                });
+                sseProxyTextField.value = "";
+        }
+
+        fetch(`${sseProxyAddress}/data`).then(res => res.text()).then(text => sseProxySetFields(text));
+        
+    </script>
+
+    <div style="display: flex; flex-direction: column">
+        <h2>Simple get on node proxy</h2>
+        <input id="proxyStringVersion" disabled placeholder="Version number should be here."/>
+        <textarea id="proxyData" disabled placeholder="Data should be here." style="resize: vertical"></textarea>
+        <button onclick="proxyFetchData()">Get proxy value</button>
+    </div>
+
+    <script>
+        /*** SIMPLE GET ON NODE PROXY ***/
+        
+        const proxyAddress = "http://localhost:3103";
+
+        const proxyStringVersion = document.getElementById('proxyStringVersion');
+        const proxyData = document.getElementById('proxyData');
+        const proxyTextField = document.getElementById('proxyTextField');
+
+        function proxySetFields(data) {
+            const message = JSON.parse(data);
+
+            proxyStringVersion.value = "Version: " + message.version;
+            proxyData.value = "Data: \n" + message.data;
+        }
+
+        function proxyFetchData() {
+            fetch(`${proxyAddress}/data`).then(res => res.text()).then(text => proxySetFields(text));
+        }
+
+        proxyFetchData();
+    </script>
+</body>
+</html>

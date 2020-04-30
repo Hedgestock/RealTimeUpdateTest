@@ -16,7 +16,7 @@
     "typescript": "^3.8.3"
   },
   "dependencies": {
-    "eventsource": "^1.0.7",
+    "eventsource": "https://github.com/Hedgestock/eventsource",
     "express": "^4.17.1",
     "node-fetch": "^2.6.0",
     "ssestream": "^1.1.0"
